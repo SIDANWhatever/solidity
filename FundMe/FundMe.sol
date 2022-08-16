@@ -2,26 +2,30 @@
 pragma solidity ^0.8.8;
 
 import "./PriceConverter.sol";
+// Gas efficiency - adding constant & immutable keywords to variables
+
+// Custom error
+error NotOwner();
 
 contract FundMe {
     using PriceConverter for uint256;
 
-    uint256 public minimumUsd = 50 * 1e18;
+    uint256 public constant MINIMUM_USD = 50 * 1e18;
 
     address[] public funders;
     mapping(address => uint256) public addressToAmountFunded;
 
-    address public owner;
+    address public immutable i_owner;
 
     constructor() {
-        owner = msg.sender;
+        i_owner = msg.sender;
     }
 
     function fund() public payable {
         // Want to be able to set a minimum fund amount
         // 1. How do we send ETH to this contract?
         require(
-            msg.value.getConversionRate() >= minimumUsd,
+            msg.value.getConversionRate() >= MINIMUM_USD,
             "Didn't send enough"
         );
         funders.push(msg.sender);
@@ -56,8 +60,20 @@ contract FundMe {
         require(callSuccess, "Call failed");
     }
 
+    // modifier add template for code running prior or after the main function
     modifier onlyOwner() {
-        require(msg.sender == owner, "Sender is not owner!");
+        // require(msg.sender == i_owner, "Sender is not owner!");
+        if (msg.sender != i_owner) {
+            revert NotOwner();
+        }
         _;
+    }
+
+    receive() external payable {
+        fund();
+    }
+
+    fallback() external payable {
+        fund();
     }
 }
