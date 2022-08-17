@@ -1,0 +1,4 @@
+.env
+.encryptedKey.json
+.encryptedKey_testnet.json
+node_modules
